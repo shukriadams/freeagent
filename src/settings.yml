@@ -1,0 +1,9 @@
+# example settings file
+version: 1
+
+jobs:
+    myjob:
+        trigger: push
+        type: git
+        url: https://github.com/shukriadams/tuna-server.git
+        

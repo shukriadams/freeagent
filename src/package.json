@@ -1,0 +1,24 @@
+{
+    "name": "freeagent",
+    "version": "0.0.1",
+    "description": "An independent mini CI server.",
+    "private": false,
+    "author": "shukri.adams@gmail.com",
+    "license": "MIT",
+    "engines": {
+        "node": ">=0.12.x"
+    },
+    "scripts": {
+        "start": "node index"
+    },
+    "dependencies": {
+        "winston": "2.4.0",
+        "js-yaml": "3.13.1",
+        "express": "4.17.1",
+        "sanitize-filename": "1.6.3",
+        "winston-daily-rotate-file": "1.7.2",
+        "fs-extra": "8.1.0",
+        "cron": "1.7.1"
+    },
+    "devDependencies": {}
+}
