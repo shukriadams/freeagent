@@ -3,7 +3,9 @@ version: 1
 
 jobs:
     myjob:
+        path: ./..
         trigger: push
+        runOnStart: true
         type: git
         url: https://github.com/shukriadams/tuna-server.git
         

@@ -9,14 +9,18 @@
         "node": ">=0.12.x"
     },
     "scripts": {
-        "start": "node index"
+        "start": "node index",
+        "brk": "node --inspect-brk=0.0.0.0:3101 index",
+        "debug": "node --inspect=0.0.0.0:3101 index"
     },
     "dependencies": {
         "winston": "2.4.0",
         "js-yaml": "3.13.1",
+        "jsonfile": "5.0.0",
         "express": "4.17.1",
         "sanitize-filename": "1.6.3",
-        "winston-daily-rotate-file": "1.7.2",
+        "madscience-fsUtils": "https://github.com/shukriadams/node-fsUtils.git#0.0.5",
+        "winston-wrapper": "https://github.com/shukriadams/winston-wrapper.git#0.0.5",
         "fs-extra": "8.1.0",
         "cron": "1.7.1"
     },

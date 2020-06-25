@@ -41,6 +41,8 @@ for (const jobName in rawSettings.jobs){
         enabled : true,
         
         interval : '* * * * *',
+        
+        path : './',
 
         trigger : 'push', // push|tag
 
@@ -48,10 +50,12 @@ for (const jobName in rawSettings.jobs){
         // disabled by default
         ignoreWarnings : false,
 
+        iterate : 'latest', // all|latest
+
         runOnStart : false,
 
         // shell command to run
-        command : '',
+        command : 'echo "no command set yet"',
 
         // if true, all console out will be written to log. This can bloat your logs, so use carefully
         logResults : false

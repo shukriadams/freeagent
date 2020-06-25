@@ -1,7 +1,7 @@
-let winston = require('winston'),
-    fs = require('fs-extra'),
+let fs = require('fs-extra'),
     _jobLogs = {},
     _global,
+    winston = require('winston-wrapper'),
     path = require('path'),
     settings = require('./settings')
 
@@ -13,29 +13,8 @@ class Logger {
             fs.mkdirSync(logFolder)
 
         // apply rotation override for winston
-        require('winston-daily-rotate-file')
-
-        this.info = new (winston.Logger)({
-            transports: [
-                new (winston.transports.DailyRotateFile)({
-                    filename: path.join(logFolder, '.log'),
-                    datePattern: 'info.yyyy-MM-dd',
-                    prepend: true,
-                    level: 'info'
-                })
-            ]
-        })
-
-        this.error = new (winston.Logger)({
-            transports: [
-                new (winston.transports.DailyRotateFile)({
-                    filename: path.join(logFolder, '.log'),
-                    datePattern: 'error.yyyy-MM-dd',
-                    prepend: true,
-                    level: 'error'
-                })]
-        })
-
+        this.info = winston.new(logFolder)
+        this.error = winston.new(logFolder)
     }
 }
 
@@ -52,8 +31,8 @@ module.exports = {
     // initializes loggers used for each job
     initializeJobs : async function(){
         for(const jobName in settings.jobs) {
-            const job = settings.jobs[jobName]
-            const logpath = path.join(settings.logPath, job.__safeName, 'logs')
+            const job = settings.jobs[jobName],
+                logpath = path.join(settings.logPath, job.__safeName, 'logs')
             
             await fs.ensureDir(logpath)
             _jobLogs[job.name] = new Logger(logpath)

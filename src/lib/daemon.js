@@ -1,12 +1,14 @@
 const CronJob = require('cron').CronJob,
     settings = require('./settings'),
     logger = require('./logger'),
-    execSync = require('child_process').execSync ,
-    execAsync = async function(command, options){
-        const execAsync = require('child_process').exec
+    jsonfile = require('jsonfile'),
+    path = require('path')
+    fs = require('fs-extra'),
+    execSync = require('child_process').execSync,
+    execAsync = require('child_process').exec
+    execAwait = async function(command, options){
         return new Promise((resolve, reject)=>{
             try {
-                options.stdio = 'inherit'
                 execAsync(command, options, function(err, result){
                     if (err)
                         return reject(err)
@@ -26,9 +28,10 @@ class CronProcess
         this.config = config
         this.lastRun = null
         this.nextRun = null
-        this.logInfo = logger.instance(config.name).info.info
-        this.logError = logger.instance(config.name).error.error
+        this.logInfo = logger.instance(config.name).info.info.info
+        this.logError = logger.instance(config.name).error.error.error
         this.isPassing = false
+        this.queuePath = path.join(settings.logPath, this.config.__safeName, 'queue')
         this.errorMessage = 'Checking has not run yet'
         this.busy = false
 
@@ -41,120 +44,105 @@ class CronProcess
         
     }
 
-    start(){
-        
+    async start(){
+        await fs.ensureDir(this.queuePath)
         this.logInfo('Starting ' + this.config.name)
+        
         this.cron = new CronJob(this.config.interval, async()=>{
             try
             {
-                if (this.busy){
-                    this.logInfo(`${this.config.name} check was busy from previous run, skipping`);
-                    return
-                }
+                this.lastRun = new Date()
+                this.errorMessage = null
         
-                this.busy = true
-                await this.work()
+                try {
+                    await this.refreshQueue()
+                    await this.runNext()
+                    
+                    this.isPassing = true
+                } catch(ex){
+                    this.logError(`Unhandled exception in ${this.config.name} : ${ex}`);
+                    this.isPassing = false
+                }
 
+                this.calcNextRun()
+               
             } catch (ex){
                 this.logError(ex)
-            } finally {
-                this.busy = false
             }
         }, null, true, null, null, this.config.runOnStart /*runonitit*/)
     }
 
-    async hasChanged(){
+    async refreshQueue(){
         if (this.config.type === 'git'){
+            let hash
             if (this.config.trigger === 'push'){
-
+                hash = (await execAwait('git rev-parse HEAD', { cwd : this.config.path})).trim()
             } else if (this.config.trigger === 'tag'){
                 
+            }
+
+            const now = new Date(),
+                writePath = path.join(this.queuePath, `${hash}.json`)
+
+            if (!await fs.exists(writePath)){
+                jsonfile.writeFileSync(writePath, {
+                    processed: false,
+                    resultFlag : 'pending',
+                    logOut : null,
+                    type : this.config.trigger,
+                    dateCreated : now,
+                    hash
+                }, { spaces: 4 })
+
+                this.logInfo(`Added to queue - hash ${hash} for job ${this.config.name} `)
             }
         }
 
         return true
     }
 
-    async work(){
-        this.lastRun = new Date()
-        this.errorMessage = null
-
-        if (this.config.enabled === false)
+    async runNext(){
+        if (this.busy)
             return
 
-        if (!this.hasChanged())
+        // list files, sorted by date, show only names
+        let queueQuery = await execSync('ls -A1 -t', { cwd: this.queuePath }),
+            files = Buffer.from( queueQuery, 'binary' )
+                .toString('utf8')       // convery result from binary to string
+                .split('\n')            // one file per line
+                .filter(file => !!file) // remove empty entries
+
+        if (!files.length)
             return
 
-        try {
-            // do work here!
-            console.log('work!')
-            this.isPassing = true
-        } catch(ex){
-            this.logError(`Unhandled exception in ${this.config.__name} : ${ex}`);
-            this.isPassing = false
+        let queueFile,
+            queueFilePath
+            
+        if (this.config.iterate === 'latest'){
+            queueFilePath = path.join(this.queuePath, files[0])
+            queueFile = jsonfile.readFileSync(queueFilePath)
+            if (queueFile.processed)
+                return
         }
 
-        this.calcNextRun()
-        
-        if (this.errorMessage)
-            this.logInfo(this.errorMessage)
-
-        let flag = path.join(settings.logs, this.config.__safeName, 'flag'),
-            historyLogFolder = path.join(settings.logs, this.config.__safeName, 'history')
-
-        if (this.isPassing){
-            await fs.ensureDir(historyLogFolder)
-
-            jsonfile.writeFileSync(path.join(historyLogFolder, `status.json`), {
-                status : 'up',
-                url : this.config.url,
-                date : this.lastRun
-            })
-
-            if (await fs.exists(flag)){
-
-                // site is back up after fail was previous detected, clean up flag and write log
-                await fs.remove(flag)
-
-                jsonfile.writeFileSync(path.join(historyLogFolder, `${this.lastRun.getTime()}.json`), {
-                    status : 'up',
-                    url : this.config.url,
-                    date : this.lastRun
-                })
-
-                this.logInfo(`Status changed, flag removed for ${this.config.__name}`)
-                statusChanged = true
-            }
-        } else {
-
-            if (!await fs.exists(flag)){
-
-                await fs.ensureDir(historyLogFolder)
-
-                // site is down, write fail flag and log
-                jsonfile.writeFileSync(flag, {
-                    url : this.config.url,
-                    date : new Date()
-                })
-
-                jsonfile.writeFileSync(path.join(historyLogFolder, `${this.lastRun.getTime()}.json`), {
-                    status : 'down',
-                    url : this.config.url,
-                    date : new Date()
-                })
                 
-                jsonfile.writeFileSync(path.join(historyLogFolder, `status.json`), {
-                    status : 'down',
-                    url : this.config.url,
-                    date : this.lastRun
-                })
-
-                this.logInfo(`Status changed, flag created for ${this.config.__name}`)
-                statusChanged = true
+        execAsync(this.config.command, { cwd : this.config.path }, (err, result)=>{
+            let resultFlag = 'passed'
+            if (err){
+                resultFlag = 'failed'
+                this.logError(err)
             }
-        }
 
+            queueFile.resultFlag = resultFlag
+            queueFile.processed = true
+            queueFile.logOut = result
+            queueFile.dateRun = new Date()
+            jsonfile.writeFileSync(queueFilePath, queueFile, { spaces: 4 })
+            
+            this.busy = false
+        }) 
     }
+
 }
 
 module.exports = {
@@ -163,9 +151,14 @@ module.exports = {
 
      start : async ()=>{
         for (const watcher in settings.jobs){
-            const cronjob = new CronProcess(settings.jobs[watcher])
+            const jobSettings = settings.jobs[watcher]
+
+            if (!jobSettings.enabled)
+                continue
+
+            const cronjob = new CronProcess(jobSettings)
             cronJobs.push(cronjob)
-            cronjob.start()
+            await cronjob.start()
         }
 
         if (!settings.jobs || !Object.keys(settings.jobs).length)
