@@ -6,3 +6,9 @@ Standalone CI runner
 
 - Git 2.18 or higher
 - Bash
+
+## Build
+
+- npm install -g pkg
+- cd src
+- pkg . --targets win --output ./build/freeagent
