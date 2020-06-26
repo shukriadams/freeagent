@@ -8,21 +8,39 @@
     "engines": {
         "node": ">=0.12.x"
     },
+    "bin": "index.js",
     "scripts": {
         "start": "node index",
         "brk": "node --inspect-brk=0.0.0.0:3101 index",
         "debug": "node --inspect=0.0.0.0:3101 index"
     },
     "dependencies": {
-        "winston": "2.4.0",
+        "fs-extra": "8.1.0",
         "js-yaml": "3.13.1",
         "jsonfile": "5.0.0",
         "express": "4.17.1",
+        "custom-env": "1.0.0",
         "sanitize-filename": "1.6.3",
         "madscience-fsUtils": "https://github.com/shukriadams/node-fsUtils.git#0.0.5",
+        "madscience-node-exec": "https://github.com/shukriadams/node-exec.git#0.0.6",
         "winston-wrapper": "https://github.com/shukriadams/winston-wrapper.git#0.0.5",
-        "fs-extra": "8.1.0",
         "cron": "1.7.1"
     },
-    "devDependencies": {}
+    "devDependencies": {},
+    "pkg": {
+        "assets": [
+            "./package.json",
+            "./routes/**",
+            "./node_modules/fs-extra/**",
+            "./node_modules/js-yaml/**",
+            "./node_modules/express/**",
+            "./node_modules/jsonfile/**",
+            "./node_modules/cron/**",
+            "./node_modules/custom-en/**",
+            "./node_modules/sanitize-filename/**",
+            "./node_modules/madscience-node-exec/**",
+            "./node_modules/madscience-fsUtils/**",
+            "./node_modules/winston-wrapper/**"
+        ]
+    }
 }

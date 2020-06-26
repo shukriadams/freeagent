@@ -1,25 +1,11 @@
 const CronJob = require('cron').CronJob,
     settings = require('./settings'),
     logger = require('./logger'),
+    sh = require('madscience-node-exec').sh,
     jsonfile = require('jsonfile'),
     path = require('path')
     fs = require('fs-extra'),
-    execSync = require('child_process').execSync,
-    execAsync = require('child_process').exec
-    execAwait = async function(command, options){
-        return new Promise((resolve, reject)=>{
-            try {
-                execAsync(command, options, function(err, result){
-                    if (err)
-                        return reject(err)
-
-                    resolve(result)
-                })  
-            }catch(ex){
-                resolve(ex)
-            }
-        })
-    },
+    execAsync = require('child_process').exec,
     cronJobs = []
 
 class CronProcess
@@ -77,7 +63,7 @@ class CronProcess
             let hash
             if (this.config.trigger === 'push'){
                 // get remote head
-                hash = (await execAwait('git ls-remote', { cwd : this.config.path})).split('\n')
+                hash = (await sh({ cmd: `git ls-remote ${this.config.url}`, cwd : this.config.path})).result.split('\n')
 
                 for (const ref of hash){
                     if (!ref.includes(`refs/heads/${this.config.branch}`))
@@ -88,7 +74,7 @@ class CronProcess
 
             } else if (this.config.trigger === 'tag'){
                 // get all tags from remote sorted by date, latest first
-                hash = (await execAwait('git ls-remote --tags --sort=-committerdate', { cwd : this.config.path})).split('\n')
+                hash = (await sh({ cmd :'git ls-remote --tags --sort=-committerdate', cwd : this.config.path})).split('\n')
                 if (hash.length)
                     hash = hash[0].split('\t')[1].replace('refs/tags/', '')
             }
@@ -121,11 +107,10 @@ class CronProcess
             return
 
         // list files, sorted by date, show only names
-        let queueQuery = await execSync('ls -A1 -t', { cwd: this.queuePath }),
-            files = Buffer.from( queueQuery, 'binary' )
-                .toString('utf8')       // convery result from binary to string
-                .split('\n')            // one file per line
-                .filter(file => !!file) // remove empty entries
+        let queueQuery = (await sh({ cmd : 'ls -A1 -t', cwd: this.queuePath })).result,
+        files = queueQuery
+            .split('\n')            // one file per line
+            .filter(file => !!file) // remove empty entries
 
         if (!files.length)
             return
@@ -145,7 +130,6 @@ class CronProcess
             throw 'all interate not implemented yet'
         }
 
-                
         execAsync(this.config.command, { cwd : this.config.path }, (err, result)=>{
             let resultFlag = 'passed'
             if (err){

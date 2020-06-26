@@ -3,10 +3,10 @@ version: 1
 
 jobs:
     myjob:
-        path: /home/vagrant/tuna
-        -path: ./
+        path: c:/dev/freeagent
         trigger: push
-        branch: dev
+        branch: master
         runOnStart: true
         type: git
+        url: git@github.com:shukriadams/freeagent.git
         

@@ -1,0 +1,12 @@
+# example settings file
+version: 1
+
+jobs:
+    myjob:
+        path: /home/vagrant/tuna
+        trigger: push
+        command : dir /
+        branch: dev
+        runOnStart: true
+        type: git
+        

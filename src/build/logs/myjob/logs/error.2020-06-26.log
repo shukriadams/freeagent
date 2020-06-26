@@ -1,0 +1,2 @@
+{"level":"error","message":"Unhandled exception in myjob : Error: spawn C:\\Windows\\system32\\cmd.exe ENOENT","timestamp":"2020-06-26T12:41:15.621Z"}
+{"level":"error","message":"Unhandled exception in myjob : Error: spawn C:\\Windows\\system32\\cmd.exe ENOENT","timestamp":"2020-06-26T12:43:15.004Z"}
