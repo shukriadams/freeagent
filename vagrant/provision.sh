@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 sudo apt-get update
 
+# install latest version of git
+sudo apt-add-repository ppa:git-core/ppa
+sudo apt-get update
+sudo apt-get install git
+
 #install node js
 curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
 sudo apt-get install nodejs  -y

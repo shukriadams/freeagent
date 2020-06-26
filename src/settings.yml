@@ -3,9 +3,10 @@ version: 1
 
 jobs:
     myjob:
-        path: ./..
+        path: /home/vagrant/tuna
+        -path: ./
         trigger: push
+        branch: dev
         runOnStart: true
         type: git
-        url: https://github.com/shukriadams/tuna-server.git
         

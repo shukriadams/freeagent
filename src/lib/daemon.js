@@ -76,10 +76,25 @@ class CronProcess
         if (this.config.type === 'git'){
             let hash
             if (this.config.trigger === 'push'){
-                hash = (await execAwait('git rev-parse HEAD', { cwd : this.config.path})).trim()
+                // get remote head
+                hash = (await execAwait('git ls-remote', { cwd : this.config.path})).split('\n')
+
+                for (const ref of hash){
+                    if (!ref.includes(`refs/heads/${this.config.branch}`))
+                        continue
+
+                    hash = ref.split('\t')[0]
+                }
+
             } else if (this.config.trigger === 'tag'){
-                
+                // get all tags from remote sorted by date, latest first
+                hash = (await execAwait('git ls-remote --tags --sort=-committerdate', { cwd : this.config.path})).split('\n')
+                if (hash.length)
+                    hash = hash[0].split('\t')[1].replace('refs/tags/', '')
             }
+
+            if (!hash)
+                return
 
             const now = new Date(),
                 writePath = path.join(this.queuePath, `${hash}.json`)
