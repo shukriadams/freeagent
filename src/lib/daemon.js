@@ -134,10 +134,15 @@ class CronProcess
             queueFilePath
             
         if (this.config.iterate === 'latest'){
+            // if runnign latest only, check if latest queue item is processed
             queueFilePath = path.join(this.queuePath, files[0])
             queueFile = jsonfile.readFileSync(queueFilePath)
             if (queueFile.processed)
                 return
+
+        } else if (this.config.iterate === 'all'){
+            // walk the queue fromo latest to oldest until an unprocessed item is found, then run
+            throw 'all interate not implemented yet'
         }
 
                 
