@@ -5,7 +5,7 @@ const CronJob = require('cron').CronJob,
     jsonfile = require('jsonfile'),
     path = require('path')
     fs = require('fs-extra'),
-    execAsync = require('child_process').exec,
+    spawnAsync = require('child_process').spawn,
     cronJobs = []
 
 class CronProcess
@@ -130,20 +130,22 @@ class CronProcess
             throw 'all interate not implemented yet'
         }
 
+        let output = '',
+            err = ''
         this.logInfo(`starting run on job ${this.config.name} @ ${queueFile.hash}`)
-        execAsync(this.config.command, { cwd : this.config.path }, (err, result)=>{
+        const child = spawnAsync('sh', ['-c', this.config.command], { cwd : this.config.path }) 
+
+        child.on('close', (code) => {
             let resultFlag = 'passed'
-            if (err){
+            if (code !== 0)
                 resultFlag = 'failed'
-                result = err
-                this.logError(err)
-            }
 
             // update queue file
             queueFile.resultFlag = resultFlag
             queueFile.processed = true
             queueFile.passed = resultFlag == 'passed'
-            queueFile.logOut = result
+            queueFile.output = output
+            queueFile.err = err 
             queueFile.dateRun = new Date()
             jsonfile.writeFileSync(queueFilePath, queueFile, { spaces: 4 })
             this.logInfo(`finished running job ${this.config.name} @ ${queueFile.hash}`)
@@ -152,15 +154,27 @@ class CronProcess
             if (resultFlag !== 'passed'){
                 jsonfile.writeFileSync(path.join(settings.logPath, this.config.__safeName, 'unchecked', `${queueFile.dateRun.getTime()}.json`), {
                     date : queueFile.dateRun,
-                    error : err,
+                    data: err,
                     type: queueFile.type,
                     hash : queueFile.hash
                 });
             }
             
-            this.busy = false
+            this.busy = false          
+        });
 
-        }) 
+        child.stderr.on('data', (data) => {
+            const string = data.toString()
+            err += string
+            this.logError(string)
+        })
+
+        child.stdout.on('data', (data) => {
+            const string = data.toString()
+            output += string
+            this.logInfo(string)
+        })
+
     }
 
 }
