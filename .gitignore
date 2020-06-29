@@ -1,5 +1,6 @@
 
 src/node_modules
+src/build
 src/logs
 vagrant/.vagrant
 vagrant/ubuntu-bionic-18.04-cloudimg-console.log

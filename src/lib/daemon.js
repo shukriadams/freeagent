@@ -14,8 +14,8 @@ class CronProcess
         this.config = config
         this.lastRun = null
         this.nextRun = null
-        this.logInfo = logger.instance(config.name).info.info.info
-        this.logError = logger.instance(config.name).error.error.error
+        this.logInfo = logger.instance(config.name).info.info
+        this.logError = logger.instance(config.name).error
         this.isPassing = false
         this.queuePath = path.join(settings.logPath, this.config.__safeName, 'queue')
         this.errorMessage = 'Checking has not run yet'
@@ -32,8 +32,8 @@ class CronProcess
 
     async start(){
         await fs.ensureDir(this.queuePath)
+        await fs.ensureDir(path.join(settings.logPath, this.config.__safeName, 'unchecked'))
         this.logInfo('Starting ' + this.config.name)
-        
         this.cron = new CronJob(this.config.interval, async()=>{
             try
             {
@@ -134,16 +134,30 @@ class CronProcess
             let resultFlag = 'passed'
             if (err){
                 resultFlag = 'failed'
+                result = err
                 this.logError(err)
             }
 
+            // update queue file
             queueFile.resultFlag = resultFlag
             queueFile.processed = true
+            queueFile.passed = resultFlag == 'passed'
             queueFile.logOut = result
             queueFile.dateRun = new Date()
             jsonfile.writeFileSync(queueFilePath, queueFile, { spaces: 4 })
+
+            // write fail flag
+            if (resultFlag !== 'passed'){
+                jsonfile.writeFileSync(path.join(settings.logPath, this.config.__safeName, 'unchecked', `${queueFile.dateRun.getTime()}.json`), {
+                    date : queueFile.dateRun,
+                    error : err,
+                    type: queueFile.type,
+                    hash : queueFile.hash
+                });
+            }
             
             this.busy = false
+
         }) 
     }
 

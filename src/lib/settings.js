@@ -1,13 +1,16 @@
 // force import .env settings if present
 let fs = require('fs-extra'),
+    rawSettings,
+    process = require('process'),
     sanitize = require('sanitize-filename'),
     yaml = require('js-yaml'),
     settings
 
+if (!fs.existsSync('./settings.yml'))
+    throw 'settings.yml not found, exiting'
+
 if (fs.existsSync('./.env'))
     require('custom-env').env()
-
-let rawSettings
 
 try {
     const settingsYML = fs.readFileSync('./settings.yml', 'utf8')
@@ -41,9 +44,9 @@ for (const jobName in rawSettings.jobs){
         enabled : true,
         
         interval : '* * * * *',
+    
+        path : null,
         
-        path : './',
-
         trigger : 'push', // push|tag
 
         // stderr output with "warning" in them will be ignored. Experimental and not entirely robust, so
@@ -71,10 +74,16 @@ settings.validate=()=>{
         const job = settings.jobs[jobName]
         
         if (job.type !== 'git')
-            throw `Unsupported type ${job.type} in job ${jobName}`
+            throw `Unsupported type ${job.type} in job "${jobName}"`
 
         if (job.type === 'git' && !['tag', 'push'].includes(job.trigger))
-            throw `Unsupported trigger ${job.trigger} in job ${jobName}`
+            throw `Unsupported trigger ${job.trigger} in job "${jobName}"`
+
+        if (!job.path)
+            throw `Job "${job.trigger}" is missing a 'path'`
+
+        if (!fs.existsSync(job.path))
+            throw `Path "${job.path}" for job "${job.trigger}" does not exist`
 
     }
 }

@@ -21,6 +21,7 @@
         "express": "4.17.1",
         "custom-env": "1.0.0",
         "sanitize-filename": "1.6.3",
+        "s-ago": "2.0.1",
         "madscience-fsUtils": "https://github.com/shukriadams/node-fsUtils.git#0.0.5",
         "madscience-node-exec": "https://github.com/shukriadams/node-exec.git#0.0.6",
         "winston-wrapper": "https://github.com/shukriadams/winston-wrapper.git#0.0.5",
@@ -31,6 +32,7 @@
         "assets": [
             "./package.json",
             "./routes/**",
+            "./node_modules/s-ago/**",
             "./node_modules/fs-extra/**",
             "./node_modules/js-yaml/**",
             "./node_modules/express/**",

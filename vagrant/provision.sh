@@ -15,6 +15,9 @@ sudo apt install docker.io -y
 sudo apt install docker-compose -y
 sudo usermod -aG docker vagrant
 
+sudo npm install -g pkg 
+
+
 # force startup folder to vagrant project
 echo "cd /vagrant/src" >> /home/vagrant/.bashrc
 

@@ -3,10 +3,11 @@ version: 1
 
 jobs:
     myjob:
-        path: c:/dev/freeagent
+        path: .
         trigger: push
         branch: master
         runOnStart: true
         type: git
+        command: dfdfdf d
         url: git@github.com:shukriadams/freeagent.git
         

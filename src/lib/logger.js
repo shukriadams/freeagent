@@ -13,8 +13,8 @@ class Logger {
             fs.mkdirSync(logFolder)
 
         // apply rotation override for winston
-        this.info = winston.new(logFolder)
-        this.error = winston.new(logFolder)
+        this.info = winston.new(logFolder).info
+        this.error = winston.new(logFolder).error.error
     }
 }
 
