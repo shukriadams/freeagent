@@ -13,3 +13,4 @@ Standalone CI runner
     cd src
     pkg . --targets win --output ./build/freeagent
     pkg . --targets node10-linux-x64 --output ./build/freeagent
+

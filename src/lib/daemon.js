@@ -145,6 +145,7 @@ class CronProcess
             queueFile.logOut = result
             queueFile.dateRun = new Date()
             jsonfile.writeFileSync(queueFilePath, queueFile, { spaces: 4 })
+            this.logInfo(`finished running job ${this.config.name} @ ${queueFile.hash}`)
 
             // write fail flag
             if (resultFlag !== 'passed'){
