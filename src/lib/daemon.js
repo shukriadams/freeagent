@@ -130,6 +130,7 @@ class CronProcess
             throw 'all interate not implemented yet'
         }
 
+        this.logInfo(`starting run on job ${this.config.name} @ ${queueFile.hash}`)
         execAsync(this.config.command, { cwd : this.config.path }, (err, result)=>{
             let resultFlag = 'passed'
             if (err){
